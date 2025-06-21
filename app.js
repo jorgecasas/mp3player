@@ -1,7 +1,9 @@
+
 let audio = new Audio();
-let playlist = [];
-let displayList = [];
+let playlist = [];      // shuffled playback order
+let displayList = [];   // alphabetically sorted for UI
 let currentIndex = -1;
+let isShuffling = true;
 
 const fileInput = document.getElementById('file-input');
 const fileListUI = document.getElementById('file-list');
@@ -26,18 +28,20 @@ function playSong(index) {
   const file = playlist[currentIndex];
   audio.src = URL.createObjectURL(file);
   nowPlaying.textContent = file.name;
-  document.title = file.name;
+  document.title = file.name; // Update page title
   highlightPlayingByFile(file);
   audio.play();
 }
 
 function playNext() {
-  currentIndex = (currentIndex + 1) % playlist.length;
+  currentIndex++;
+  if (currentIndex >= playlist.length) currentIndex = 0;
   playSong(currentIndex);
 }
 
 function playPrev() {
-  currentIndex = (currentIndex - 1 + playlist.length) % playlist.length;
+  currentIndex--;
+  if (currentIndex < 0) currentIndex = playlist.length - 1;
   playSong(currentIndex);
 }
 
@@ -54,10 +58,10 @@ function loadPlaylist(files) {
   playSong(0);
 }
 
-function renderFileList(filtered = null) {
-  const list = filtered || displayList;
+function renderFileList(filteredFiles = null) {
+  const listToRender = filteredFiles || displayList;
   fileListUI.innerHTML = '';
-  list.forEach(file => {
+  listToRender.forEach((file) => {
     const li = document.createElement('li');
     li.textContent = file.name;
     li.onclick = () => {
@@ -69,35 +73,73 @@ function renderFileList(filtered = null) {
 }
 
 filterInput.addEventListener('input', () => {
-  const term = filterInput.value.toLowerCase().trim();
-  if (term === "") {
-    renderFileList();
+  const filterText = filterInput.value.trim().toLowerCase();
+  if (!filterText) {
+    renderFileList(displayList);
   } else {
-    const filtered = displayList.filter(file => file.name.toLowerCase().includes(term));
+    const filtered = displayList.filter(file =>
+      file.name.toLowerCase().includes(filterText)
+    );
     renderFileList(filtered);
   }
 });
 
-startBtn.onclick = () => {
+startBtn.addEventListener('click', () => {
   if (playlist.length > 0 && currentIndex === -1) {
     playSong(0);
   } else if (playlist.length > 0) {
     audio.play();
   } else {
-    fileInput.click();
+    requestFolderAndLoad();
   }
-};
+});
 
-stopBtn.onclick = () => audio.pause();
-nextBtn.onclick = playNext;
-prevBtn.onclick = playPrev;
-chooseBtn.onclick = () => fileInput.click();
+stopBtn.addEventListener('click', () => {
+  audio.pause();
+});
 
-fileInput.onchange = e => loadPlaylist(e.target.files);
-audio.onended = playNext;
+nextBtn.addEventListener('click', playNext);
+prevBtn.addEventListener('click', playPrev);
 
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('service-worker.js');
-  });
+chooseBtn.addEventListener('click', requestFolderAndLoad);
+
+audio.addEventListener('ended', playNext);
+
+// Persistent folder loading
+async function requestFolderAndLoad() {
+  try {
+    const dirHandle = await window.showDirectoryPicker({ id: 'music-folder', mode: 'read' });
+    const permission = await dirHandle.requestPermission({ mode: 'read' });
+    if (permission === 'granted') {
+      await loadFilesFromDirectory(dirHandle);
+    }
+  } catch (e) {
+    console.warn('Folder access denied or cancelled');
+  }
 }
+
+async function loadFilesFromDirectory(dirHandle) {
+  const files = [];
+  for await (const entry of dirHandle.values()) {
+    if (entry.kind === 'file' && entry.name.toLowerCase().endsWith('.mp3')) {
+      files.push(await entry.getFile());
+    }
+  }
+  loadPlaylist(files);
+}
+
+window.addEventListener('load', async () => {
+  try {
+    const dirHandle = await window.showDirectoryPicker({ id: 'music-folder', mode: 'read' });
+    const permission = await dirHandle.queryPermission({ mode: 'read' });
+    if (permission === 'granted') {
+      await loadFilesFromDirectory(dirHandle);
+    }
+  } catch (e) {
+    console.log('No folder auto-loaded or not allowed');
+  }
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('service-worker.js');
+  }
+});
