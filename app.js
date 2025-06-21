@@ -144,12 +144,15 @@ window.addEventListener('load', async () => {
     const permission = await dirHandle.queryPermission({ mode: 'read' });
     if (permission === 'granted') {
       await loadFilesFromDirectory(dirHandle);
+    } else {
+      console.log('Permission not granted yet for last folder');
     }
   } catch (e) {
-    console.log('No folder auto-loaded or not allowed');
+    console.log('No folder auto-loaded or permission denied');
   }
 
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('service-worker.js');
   }
 });
+
