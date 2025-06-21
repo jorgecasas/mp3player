@@ -1,0 +1,155 @@
+@font-face {
+  font-family: 'Iternova';
+  src: url('./fonts/iternova.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Icomoon';
+  src: url('./fonts/icomoon.eot');
+  src: url('./fonts/icomoon.eot') format('embedded-opentype'),
+  url('./fonts/icomoon.ttf') format('truetype'),
+  url('./fonts/icomoon.woff') format('woff'),
+  url('./fonts/icomoon.svg') format('svg');
+  font-weight: normal;
+  font-style: normal;
+}
+
+[class^="icon-"], [class*=" icon-"] {
+  color: $font-color-black;
+  font-family: 'icomoon';
+  speak: none;
+  font-style: normal;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+
+[class^="icon-"], [class*=" icon-"] {
+  font-family: 'icomoon';
+  speak: none;
+  font-style: normal;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+  font-size: 2em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.icon-stop:before {
+  content: "\e02a";
+}
+.icon-pause:before {
+  content: "\e018";
+}
+.icon-play_arrow:before {
+  content: "\e01b";
+}
+.icon-sd_storage:before {
+  content: "\e0b2";
+}
+.icon-skip_next:before {
+  content: "\e027";
+}
+.icon-skip_previous:before {
+  content: "\e028";
+}
+
+body {
+  font-family: 'Iternova', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: #111;
+  color: #eee;
+  text-align: center;
+  padding: 20px;
+}
+button {
+  border: none;
+  border-radius: 8px;
+  padding: 4px 8px 4px 8px;
+  cursor: pointer;
+  margin: 4px;
+  transition: all 0.3s ease;
+}
+#controls button {
+  font-family: 'Iconmoon', monospace;
+}
+#start-button {
+  background-color: #007bff;
+  color: white;
+  font-weight: bold;
+  padding: 4px 32px 0px 32px;
+}
+#start-button:hover {
+  background-color: #0056b3;
+}
+#stop-button {
+  background-color: #dc3545;
+  color: white; 
+}
+#stop-button:hover {
+  background-color: #a71d2a;
+}
+#choose-folder {
+  margin: 4px;
+  font-size: 1em;
+  padding: 4px 16px 0px 16px;
+  text-align: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em; 
+}
+#now-playing {
+  font-weight: bold;
+  font-size: 20px;
+  margin: 20px 0;
+}
+#filter-input {
+  width: 90%;
+  max-width: 600px;
+  margin: 12px auto 20px auto;
+  padding: 10px 15px;
+  font-size: 16px;
+  border: 2px solid #1E88E5;
+  border-radius: 25px;  /* Rounded borders */
+  background-color: #222;
+  color: #eee;
+  display: block;
+  outline: none;
+  transition: border-color 0.3s ease;
+}
+
+#filter-input:focus {
+  border-color: #39f;
+}
+#file-list {
+  max-height: 50vh; 
+  overflow-y: auto;
+  border: 1px solid #333;
+  border-radius: 8px;
+  background-color: #1a1a1a;
+  padding: 0;
+  margin: 0 auto;
+  max-width: 96%;
+  list-style: none;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+  margin: 0 auto;
+  width: 96%;
+}
+li {
+  border-bottom: 1px solid #444;
+  padding: 10px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+li:hover {
+  background: #222;
+  color: #0cf;
+}

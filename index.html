@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MP3 Player</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <h1>MP3 Player</h1>
+  <p>Now Playing: <span id="now-playing">None</span></p>
+
+  <div id="controls">
+    <button id="prev-button"><span class="icon icon-skip_previous"></span></button>
+    <button id="start-button"><span class="icon icon-play_arrow"></span></button>
+    <button id="stop-button"><span class="icon icon-stop"></span></button>
+    <button id="next-button"><span class="icon icon-skip_next"></span></button>
+  </div>
+
+  <input type="text" id="filter-input" placeholder="Filter songs..." autocomplete="off" />
+  <ul id="file-list"></ul>
+
+  <input type="file" id="file-input" webkitdirectory multiple accept="audio/mpeg" style="display:none" />
+  <button id="choose-folder"><span class="icon icon-sd_storage"></span> Choose Another Folder</button>
+
+  <script src="app.js"></script>
+</body>
+</html>
