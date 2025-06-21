@@ -120,12 +120,17 @@ async function requestFolderAndLoad(useStored = true) {
 }
 
 async function loadFilesFromDirectory(dirHandle) {
-  const files = [];
+  const filePromises = [];
+
   for await (const entry of dirHandle.values()) {
     if (entry.kind === 'file' && entry.name.toLowerCase().endsWith('.mp3')) {
-      files.push(await entry.getFile());
+      filePromises.push(entry.getFile());
     }
   }
+
+  // Fetch all files in parallel (faster)
+  const files = await Promise.all(filePromises);
+
   if (files.length) {
     loadPlaylist(files);
   } else {
