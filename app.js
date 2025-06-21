@@ -1,10 +1,24 @@
 
 let audio = new Audio();
+if ('mediaSession' in navigator) {
+  navigator.mediaSession.setActionHandler('play', () => {
+    audio.play();
+  });
+  navigator.mediaSession.setActionHandler('pause', () => {
+    audio.pause();
+  });
+  navigator.mediaSession.setActionHandler('previoustrack', () => {
+    playPrev();
+  });
+  navigator.mediaSession.setActionHandler('nexttrack', () => {
+    playNext();
+  });
+}
+
 let playlist = [];
 let displayList = [];
 let currentIndex = -1;
 
-const fileInput = document.getElementById('file-input');
 const fileListUI = document.getElementById('file-list');
 const nowPlaying = document.getElementById('now-playing');
 const startBtn = document.getElementById('start-button');
@@ -30,6 +44,15 @@ function playSong(index) {
   document.title = file.name;
   highlightPlayingByFile(file);
   audio.play();
+  // Media Session metadata
+  if ('mediaSession' in navigator) {
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: file.name,
+      artist: '',
+      album: '',
+      artwork: []
+    });
+  }
 }
 
 function playNext() {
@@ -48,15 +71,9 @@ function highlightPlayingByFile(file) {
   });
 }
 
-function loadPlaylist(files) {
-  playlist = shuffle(Array.from(files));
-  displayList = Array.from(files).sort((a, b) => a.name.localeCompare(b.name));
-  renderFileList();
-  playSong(0);
-}
-
 function renderFileList(filteredFiles = null) {
   const listToRender = filteredFiles || displayList;
+  const fragment = document.createDocumentFragment();
   fileListUI.innerHTML = '';
   listToRender.forEach((file) => {
     const li = document.createElement('li');
@@ -65,8 +82,9 @@ function renderFileList(filteredFiles = null) {
       const playIndex = playlist.findIndex(f => f.name === file.name);
       if (playIndex >= 0) playSong(playIndex);
     };
-    fileListUI.appendChild(li);
+    fragment.appendChild(li);
   });
+  fileListUI.appendChild(fragment);
 }
 
 filterInput.addEventListener('input', () => {
@@ -82,6 +100,15 @@ startBtn.addEventListener('click', () => {
     playSong(0);
   } else if (playlist.length > 0) {
     audio.play();
+  // Media Session metadata
+  if ('mediaSession' in navigator) {
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: file.name,
+      artist: '',
+      album: '',
+      artwork: []
+    });
+  }
   } else {
     requestFolderAndLoad();
   }
@@ -97,13 +124,14 @@ chooseBtn.addEventListener('click', () => {
 
 audio.addEventListener('ended', playNext);
 
-// Core permission-aware folder access
+// Efficient folder load
 async function requestFolderAndLoad(useStored = true) {
   try {
     const options = useStored
       ? { id: 'music-folder', mode: 'read' }
       : { mode: 'read' };
 
+    nowPlaying.textContent = 'Loading songs...';
     const dirHandle = await window.showDirectoryPicker(options);
     let permission = await dirHandle.queryPermission({ mode: 'read' });
     if (permission !== 'granted') {
@@ -128,13 +156,19 @@ async function loadFilesFromDirectory(dirHandle) {
     }
   }
 
-  // Fetch all files in parallel (faster)
   const files = await Promise.all(filePromises);
 
   if (files.length) {
-    loadPlaylist(files);
+    // Defer shuffle and sorting
+    requestAnimationFrame(() => {
+      playlist = shuffle(files);
+      displayList = [...files].sort((a, b) => a.name.localeCompare(b.name));
+      renderFileList();
+      playSong(0);
+    });
   } else {
     alert('No MP3 files found in selected folder.');
+    nowPlaying.textContent = '';
   }
 }
 

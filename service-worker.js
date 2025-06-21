@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mp3-player-cache-v202506212357';
+const CACHE_NAME = 'mp3-player-cache-v202506212358';
 const OFFLINE_FILES = [
   './',
   './index.html',
