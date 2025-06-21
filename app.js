@@ -1,8 +1,7 @@
 let audio = new Audio();
-let playlist = [];      // shuffled playback order
-let displayList = [];   // alphabetically sorted for UI
+let playlist = [];
+let displayList = [];
 let currentIndex = -1;
-let isShuffling = true;
 
 const fileInput = document.getElementById('file-input');
 const fileListUI = document.getElementById('file-list');
@@ -12,6 +11,7 @@ const stopBtn = document.getElementById('stop-button');
 const nextBtn = document.getElementById('next-button');
 const prevBtn = document.getElementById('prev-button');
 const chooseBtn = document.getElementById('choose-folder');
+const filterInput = document.getElementById('filter-input');
 
 function shuffle(array) {
   for (let i = array.length - 1; i > 0; i--) {
@@ -32,14 +32,12 @@ function playSong(index) {
 }
 
 function playNext() {
-  currentIndex++;
-  if (currentIndex >= playlist.length) currentIndex = 0;
+  currentIndex = (currentIndex + 1) % playlist.length;
   playSong(currentIndex);
 }
 
 function playPrev() {
-  currentIndex--;
-  if (currentIndex < 0) currentIndex = playlist.length - 1;
+  currentIndex = (currentIndex - 1 + playlist.length) % playlist.length;
   playSong(currentIndex);
 }
 
@@ -56,12 +54,10 @@ function loadPlaylist(files) {
   playSong(0);
 }
 
-const filterInput = document.getElementById('filter-input');
-
-function renderFileList(filteredFiles = null) {
-  const listToRender = filteredFiles || displayList;
+function renderFileList(filtered = null) {
+  const list = filtered || displayList;
   fileListUI.innerHTML = '';
-  listToRender.forEach((file) => {
+  list.forEach(file => {
     const li = document.createElement('li');
     li.textContent = file.name;
     li.onclick = () => {
@@ -73,18 +69,16 @@ function renderFileList(filteredFiles = null) {
 }
 
 filterInput.addEventListener('input', () => {
-  const filterText = filterInput.value.trim().toLowerCase();
-  if (!filterText) {
-    renderFileList(displayList);
+  const term = filterInput.value.toLowerCase().trim();
+  if (term === "") {
+    renderFileList();
   } else {
-    const filtered = displayList.filter(file =>
-      file.name.toLowerCase().includes(filterText)
-    );
+    const filtered = displayList.filter(file => file.name.toLowerCase().includes(term));
     renderFileList(filtered);
   }
 });
 
-startBtn.addEventListener('click', () => {
+startBtn.onclick = () => {
   if (playlist.length > 0 && currentIndex === -1) {
     playSong(0);
   } else if (playlist.length > 0) {
@@ -92,24 +86,15 @@ startBtn.addEventListener('click', () => {
   } else {
     fileInput.click();
   }
-});
+};
 
-stopBtn.addEventListener('click', () => {
-  audio.pause();
-});
+stopBtn.onclick = () => audio.pause();
+nextBtn.onclick = playNext;
+prevBtn.onclick = playPrev;
+chooseBtn.onclick = () => fileInput.click();
 
-nextBtn.addEventListener('click', playNext);
-prevBtn.addEventListener('click', playPrev);
-
-fileInput.addEventListener('change', (e) => {
-  loadPlaylist(e.target.files);
-});
-
-chooseBtn.addEventListener('click', () => {
-  fileInput.click();
-});
-
-audio.addEventListener('ended', playNext);
+fileInput.onchange = e => loadPlaylist(e.target.files);
+audio.onended = playNext;
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
