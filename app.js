@@ -1,9 +1,8 @@
 
 let audio = new Audio();
-let playlist = [];      // shuffled playback order
-let displayList = [];   // alphabetically sorted for UI
+let playlist = [];
+let displayList = [];
 let currentIndex = -1;
-let isShuffling = true;
 
 const fileInput = document.getElementById('file-input');
 const fileListUI = document.getElementById('file-list');
@@ -28,20 +27,18 @@ function playSong(index) {
   const file = playlist[currentIndex];
   audio.src = URL.createObjectURL(file);
   nowPlaying.textContent = file.name;
-  document.title = file.name; // Update page title
+  document.title = file.name;
   highlightPlayingByFile(file);
   audio.play();
 }
 
 function playNext() {
-  currentIndex++;
-  if (currentIndex >= playlist.length) currentIndex = 0;
+  currentIndex = (currentIndex + 1) % playlist.length;
   playSong(currentIndex);
 }
 
 function playPrev() {
-  currentIndex--;
-  if (currentIndex < 0) currentIndex = playlist.length - 1;
+  currentIndex = (currentIndex - 1 + playlist.length) % playlist.length;
   playSong(currentIndex);
 }
 
@@ -74,14 +71,10 @@ function renderFileList(filteredFiles = null) {
 
 filterInput.addEventListener('input', () => {
   const filterText = filterInput.value.trim().toLowerCase();
-  if (!filterText) {
-    renderFileList(displayList);
-  } else {
-    const filtered = displayList.filter(file =>
-      file.name.toLowerCase().includes(filterText)
-    );
-    renderFileList(filtered);
-  }
+  const filtered = displayList.filter(file =>
+    file.name.toLowerCase().includes(filterText)
+  );
+  renderFileList(filterText ? filtered : displayList);
 });
 
 startBtn.addEventListener('click', () => {
@@ -94,37 +87,35 @@ startBtn.addEventListener('click', () => {
   }
 });
 
-stopBtn.addEventListener('click', () => {
-  audio.pause();
-});
-
+stopBtn.addEventListener('click', () => audio.pause());
 nextBtn.addEventListener('click', playNext);
 prevBtn.addEventListener('click', playPrev);
 
-chooseBtn.addEventListener('click', async () => {
-  try {
-    const dirHandle = await window.showDirectoryPicker(); // No id here!
-    const permission = await dirHandle.requestPermission({ mode: 'read' });
-    if (permission === 'granted') {
-      await loadFilesFromDirectory(dirHandle);
-    }
-  } catch (e) {
-    console.warn('Folder access denied or cancelled');
-  }
+chooseBtn.addEventListener('click', () => {
+  requestFolderAndLoad(false);  // force re-pick folder
 });
 
 audio.addEventListener('ended', playNext);
 
-// Persistent folder loading
-async function requestFolderAndLoad() {
+// Core permission-aware folder access
+async function requestFolderAndLoad(useStored = true) {
   try {
-    const dirHandle = await window.showDirectoryPicker({ id: 'music-folder', mode: 'read' });
-    const permission = await dirHandle.requestPermission({ mode: 'read' });
+    const options = useStored
+      ? { id: 'music-folder', mode: 'read' }
+      : { mode: 'read' };
+
+    const dirHandle = await window.showDirectoryPicker(options);
+    let permission = await dirHandle.queryPermission({ mode: 'read' });
+    if (permission !== 'granted') {
+      permission = await dirHandle.requestPermission({ mode: 'read' });
+    }
     if (permission === 'granted') {
       await loadFilesFromDirectory(dirHandle);
+    } else {
+      alert('Permission denied to read the selected folder.');
     }
   } catch (e) {
-    console.warn('Folder access denied or cancelled');
+    console.warn('Folder access cancelled or failed:', e);
   }
 }
 
@@ -135,24 +126,17 @@ async function loadFilesFromDirectory(dirHandle) {
       files.push(await entry.getFile());
     }
   }
-  loadPlaylist(files);
+  if (files.length) {
+    loadPlaylist(files);
+  } else {
+    alert('No MP3 files found in selected folder.');
+  }
 }
 
 window.addEventListener('load', async () => {
-  try {
-    const dirHandle = await window.showDirectoryPicker({ id: 'music-folder', mode: 'read' });
-    const permission = await dirHandle.queryPermission({ mode: 'read' });
-    if (permission === 'granted') {
-      await loadFilesFromDirectory(dirHandle);
-    } else {
-      console.log('Permission not granted yet for last folder');
-    }
-  } catch (e) {
-    console.log('No folder auto-loaded or permission denied');
-  }
+  await requestFolderAndLoad(true);
 
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('service-worker.js');
   }
 });
-
