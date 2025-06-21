@@ -101,7 +101,17 @@ stopBtn.addEventListener('click', () => {
 nextBtn.addEventListener('click', playNext);
 prevBtn.addEventListener('click', playPrev);
 
-chooseBtn.addEventListener('click', requestFolderAndLoad);
+chooseBtn.addEventListener('click', async () => {
+  try {
+    const dirHandle = await window.showDirectoryPicker(); // No id here!
+    const permission = await dirHandle.requestPermission({ mode: 'read' });
+    if (permission === 'granted') {
+      await loadFilesFromDirectory(dirHandle);
+    }
+  } catch (e) {
+    console.warn('Folder access denied or cancelled');
+  }
+});
 
 audio.addEventListener('ended', playNext);
 
